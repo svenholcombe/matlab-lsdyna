@@ -2,6 +2,7 @@
 
 This project contains a reader of ascii results files from the Finite Element solver LS-DYNA, and a wrapper to run LS-DYNA simulations programmatically from MATLAB. This project is not affiliated in any way with the creators or distributors of LS-DYNA and thus is totally unofficial.
 
+Currently, matlab-lsdyna is written for and tested on a Windows environment. ASCII database reading should by system independent, but code to run simulations is expected to fail on other systems. Efforts to further the tested environments are welcome.  
 All code is written in MATLAB by Sven Holcombe.
 
 # Features
