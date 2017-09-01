@@ -125,6 +125,10 @@ end
 shlDataFromFormattedText = reshape(sscanf(sizeBasedText,fmtStr), nFlds,[])';
 SHELLDATA(~hasCommasMask,:) = shlDataFromFormattedText;
 ELEMENT_SHELL = array2table(SHELLDATA,'Var',FLDS.fld);
+% Change individuals nodes to a matrix of nodes
+ELEMENT_SHELL.nids = table2array(ELEMENT_SHELL(:,~cellfun(@isempty,regexp(ELEMENT_SHELL.Properties.VariableNames,'^n\d+$'))));
+ELEMENT_SHELL(:,~cellfun(@isempty,regexp(ELEMENT_SHELL.Properties.VariableNames,'^n\d+$'))) = [];
+
 
 %% Get SOLID ELEMENTS
 m = strcmpi('ELEMENT_SOLID',cardNames);
@@ -158,3 +162,5 @@ end
 shlDataFromFormattedText = reshape(sscanf(sizeBasedText,fmtStr), nFlds,[])';
 SHELLDATA(~hasCommasMask,:) = shlDataFromFormattedText;
 ELEMENT_SOLID = array2table(SHELLDATA,'Var',FLDS.fld);
+ELEMENT_SOLID.nids = table2array(ELEMENT_SOLID(:,~cellfun(@isempty,regexp(ELEMENT_SOLID.Properties.VariableNames,'^n\d+$'))));
+ELEMENT_SOLID(:,~cellfun(@isempty,regexp(ELEMENT_SOLID.Properties.VariableNames,'^n\d+$'))) = [];
