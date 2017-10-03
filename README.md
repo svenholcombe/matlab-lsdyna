@@ -56,17 +56,6 @@ All code is written in MATLAB by Sven Holcombe.
    S.run('threads',4)
 ```
 
-
-##  Multiple simulations (in series):
-```matlab
-   baseFolder = 'C:\FolderToSims';
-   for i = 1:10
-      simFolder = fullfile(baseFolder,sprintf('sim%d',i));
-      S(i) = lsdyna.simulation(fullfile(simFolder,'mainFile.k'));
-   end
-   S.run % Each simulation will be run, one after the other
-``` 
-
 # Example: reading ASCII database files
 ```matlab
 
@@ -83,4 +72,15 @@ All code is written in MATLAB by Sven Holcombe.
        elout: [1x1 lsdyna.read.elout]
 ```
 
+----------------
+UNDER DEVELOPMENT
+----------------
+Some basic (underlying) utilities for extracting parts, nodes, and elements from kFiles has been created. However, for better extensibility these should be wrapped by a clean object-oriented interface.
+
+# Example: reading LS-DYNA k-file
+```matlab
+kFileStr = 'GHBMC_M50-O_v4-5_20160901.k';
+[PART, NODE, ELEMENT_SHELL, ELEMENT_SOLID] = lsdyna.read.kfile(kFileStr);
+figure, plot3(NODE.x,NODE.y,NODE.z,'.'), axis image, view(3)
+```
 
