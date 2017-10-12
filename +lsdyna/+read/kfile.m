@@ -145,12 +145,28 @@ FLDS.endChar = FLDS.startChar + FLDS.size - 1;
 FLDS.charInds = arrayfun(@(from,to)from:to,FLDS.startChar,FLDS.endChar,'Un',0);
 nFlds = size(FLDS,1);
 fmtStr = cell2mat(strcat('%', arrayfun(@num2str,FLDS.size,'Un',0), FLDS.fmt)');
-SHELLDATA = zeros(nShells,nFlds,'uint32');
+SOLIDDATA = zeros(nShells,nFlds,'uint32');
 
 hasCommasMask = any(shellFullTextChar==',',2);
 if any(hasCommasMask)
-    warning('Comma-separated ELEMENT cards not yet supported')
+    % Parse element text separated by commas
+    textWithCommas = shellFullTextChar(hasCommasMask,:);
+    nRows = size(textWithCommas,1);
+    nCols = size(textWithCommas,2);
+    [colNo,rowNo] = find(textWithCommas'==',');
+    commasCell = accumarray(rowNo,colNo,[nRows 1],@(x){x});
+    fldFromCell = cellfun(@(c)[1;c+1],commasCell,'Un',0);
+    fldToCell = cellfun(@(c)[c-1;nCols],commasCell,'Un',0);
+    shellDataFromCommas = zeros(nRows,nFlds);
+    % THIS SECTION IS SLOW! Can easily be sped up via vectorisation
+    for r = 1:nRows
+        for i = 1:length(fldFromCell{r})
+            shellDataFromCommas(r,i) = str2double(textWithCommas(r,fldFromCell{r}(i):fldToCell{r}(i)));
+        end
+    end
+    SOLIDDATA(hasCommasMask,:) = shellDataFromCommas;
 end
+
 
 % Parse formatted text by column nos
 sizeBasedText = shellFullTextChar(~hasCommasMask,1:FLDS.endChar(end))';
@@ -160,7 +176,7 @@ for i = 1:nFlds
     sizeBasedText(FLDS.endChar(i),emptyMask) = '0';
 end
 shlDataFromFormattedText = reshape(sscanf(sizeBasedText,fmtStr), nFlds,[])';
-SHELLDATA(~hasCommasMask,:) = shlDataFromFormattedText;
-ELEMENT_SOLID = array2table(SHELLDATA,'Var',FLDS.fld);
+SOLIDDATA(~hasCommasMask,:) = shlDataFromFormattedText;
+ELEMENT_SOLID = array2table(SOLIDDATA,'Var',FLDS.fld);
 ELEMENT_SOLID.nids = table2array(ELEMENT_SOLID(:,~cellfun(@isempty,regexp(ELEMENT_SOLID.Properties.VariableNames,'^n\d+$'))));
 ELEMENT_SOLID(:,~cellfun(@isempty,regexp(ELEMENT_SOLID.Properties.VariableNames,'^n\d+$'))) = [];
