@@ -29,22 +29,8 @@ classdef ELEMENT_SHELL < lsdyna.keyword.card
             
             % Supply definitions for each line of any cards represented by
             % this class
-            FLDSshell = cell2table({
-                'eid' 'pid' 'n1' 'n2' 'n3' 'n4' 'n5' 'n6' 'n7' 'n8'
-                8         8    8    8    8    8    8    8    8    8
-                "d"     "d"  "d"  "d"  "d"  "d"  "d"  "d"  "d"  "d"
-                }','Var',{'fld','size','fmt'});
-            FLDSshellThick = cell2table({
-                't1' 't2' 't3' 't4' 'beta'
-                16   16   16   16     16
-                "f"  "f"  "f"  "f"    "f"
-                }','Var',{'fld','size','fmt'});
-            
-            lineDefns = cell2table({
-                "ELEMENT_SHELL"             1 @(i)true(size(i)) FLDSshell
-                "ELEMENT_SHELL_THICKNESS"   1 @(i)mod(i,2)==1   FLDSshell
-                "ELEMENT_SHELL_THICKNESS"   2 @(i)mod(i,2)==0   FLDSshellThick
-                }, 'Var', {'keyword','lineNo','lineMatchFcn','FLDS'});
+            lineDefns = lsdyna.keyword.utils.cardLineDefinition("ELEMENT_SHELL");
+
             %% Populate the line definitions with strings from each card
             % We will group into individual cards first, then separate into
             % the separate lines within each card
@@ -70,11 +56,7 @@ classdef ELEMENT_SHELL < lsdyna.keyword.card
                 strs = lineDefns.strs{mNo};
                 FLDS = lineDefns.FLDS{mNo};
                 strsAsCharMat = char(strs);
-
-                FLDS.startChar = 1+[0;cumsum(FLDS.size(1:end-1))];
-                FLDS.endChar = FLDS.startChar + FLDS.size - 1;
-                FLDS.charInds = arrayfun(@(from,to)...
-                    from:to,FLDS.startChar,FLDS.endChar,'Un',0);
+                
                 nFlds = size(FLDS,1);
                 fmtStr = cell2mat(strcat(...
                     '%', arrayfun(@num2str,FLDS.size,'Un',0), FLDS.fmt)');

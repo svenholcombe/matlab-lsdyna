@@ -32,7 +32,6 @@ classdef card < lsdyna.keyword.card_base
     
     %% CONSTRUCTOR UTILITY methods
     
-    
     methods (Hidden)
         function subclassObj = assignPropsToSubclass(this, subclassObj)
             % A utility method to assign all properties of this parent
@@ -47,12 +46,13 @@ classdef card < lsdyna.keyword.card_base
     end
     
     %% PARSER UTILITY methods
-    methods (Sealed)
-        
-    end
     methods (Static)
         function strs = convertCommaSepStrsToSpacedStrs(strs,charSpaces)
-            %%
+            % Utility function that takes an array of strings and replaces
+            % those elements with comma-separated values (one style of
+            % lsdyna deck input) with the more standard fixed-position
+            % input with the number of characters per data field provided.
+            
             % First find the strings that actually need adjusting
             hasCommaInds = find(contains(strs,","))';
             if isempty(hasCommaInds)

@@ -28,16 +28,13 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
             % Parse the string data and populate this card's numeric data
             
             % Supply definitions for each line of any cards represented by
-            % this class
-            FLDSsolid = cell2table({
-                'eid' 'pid' 'n1' 'n2' 'n3' 'n4' 'n5' 'n6' 'n7' 'n8'
-                8         8    8    8    8    8    8    8    8    8
-                "d"     "d"  "d"  "d"  "d"  "d"  "d"  "d"  "d"  "d"
-                }','Var',{'fld','size','fmt'});
+            % this class.
             
-            lineDefns = cell2table({
-                "ELEMENT_SOLID"             1 @(i)true(size(i)) FLDSsolid
-                }, 'Var', {'keyword','lineNo','lineMatchFcn','FLDS'});
+            % NOTE: This assumes ONLY the old style of solid element input
+            % with 1 card (eid,pid,n1-n8) whereas there is a new style with
+            % 2-line input where line 1 is (eid,pid) and line 2 is (n1-n10)
+
+            lineDefns = lsdyna.keyword.utils.cardLineDefinition("ELEMENT_SOLID");
             %% Populate the line definitions with strings from each card
             % We will group into individual cards first, then separate into
             % the separate lines within each card
@@ -63,11 +60,7 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
                 strs = lineDefns.strs{mNo};
                 FLDS = lineDefns.FLDS{mNo};
                 strsAsCharMat = char(strs);
-
-                FLDS.startChar = 1+[0;cumsum(FLDS.size(1:end-1))];
-                FLDS.endChar = FLDS.startChar + FLDS.size - 1;
-                FLDS.charInds = arrayfun(@(from,to)...
-                    from:to,FLDS.startChar,FLDS.endChar,'Un',0);
+                
                 nFlds = size(FLDS,1);
                 fmtStr = cell2mat(strcat(...
                     '%', arrayfun(@num2str,FLDS.size,'Un',0), FLDS.fmt)');

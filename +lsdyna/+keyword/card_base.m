@@ -18,8 +18,6 @@ classdef card_base < handle & matlab.mixin.Heterogeneous
         end
     end
     
-    
-    
     %% CONSTRUCTOR UTILITY methods
     
     methods
@@ -64,7 +62,7 @@ classdef card_base < handle & matlab.mixin.Heterogeneous
                     continue;
                 end
                 mask = classGrps==grp;
-                fprintf("Parsing %d %s cards ... ",nnz(mask),className)
+                fprintf("Parsing %s cards [%d] ... ",className,nnz(mask))
                 tic
                 C(mask) = C(mask).parseData;
                 fprintf("done in %0.2fs.\n",toc)
