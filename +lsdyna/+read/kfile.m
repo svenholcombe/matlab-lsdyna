@@ -1,4 +1,4 @@
-function [PART, NODE, ELEMENT_SHELL, ELEMENT_SOLID] = kfile(kFileStr)
+function [PART, NODE, ELEMENT_SHELL, ELEMENT_SOLID, ELEMENT_SHELL_THICKNESS] = kfile(kFileStr)
 % UNDER CONSTRUCTION! This file contains some basic logic to parse a dyna
 % k-file but the overall API for reading and storing that information is
 % not complete.
@@ -79,56 +79,82 @@ NODE.tc = uint8(NODE.tc);
 NODE.rc = uint8(NODE.rc);
 
 %% Get SHELL ELEMENTS
-m = strcmpi('ELEMENT_SHELL',cardNames);
-shellFullText = regexp([cardsFullText{m}],'^\s*[^\$\*][^\r\n]*','match','lineanchors')';
-shellFullTextChar = char(shellFullText);
-% Add ELEMENT_SHELL_THICKNESS (if any)
-m = strcmpi('ELEMENT_SHELL_THICKNESS',cardNames);
-if any(m)
-    shellFullText = regexp([cardsFullText{m}],'^\s*[^\$\*][^\r\n]*','match','lineanchors')';
-    shellThickFullTextChar = char(shellFullText);
-    if size(shellFullTextChar,2)>size(shellThickFullTextChar,2)
-        shellThickFullTextChar(:,end+1:size(shellFullTextChar,2)) = ' ';
-    elseif size(shellFullTextChar,2)<size(shellThickFullTextChar,2)
-        shellFullTextChar(:,end+1:size(shellThickFullTextChar,2)) = ' ';
-    end
-    shellFullTextChar = [shellFullTextChar; shellThickFullTextChar(1:2:end,:)];
-    % TODO: append shell thickness data
-end
 
-nShells = size(shellFullTextChar,1);
-
-FLDS = cell2table({
-    'eid' 'pid'  'n1'  'n2' 'n3' 'n4'
-    8         8     8     8    8    8
-    'd'     'd'   'd'   'd'  'd'  'd'
+FLDSshell = cell2table({
+    'eid' 'pid' 'n1' 'n2' 'n3' 'n4' 'n5' 'n6' 'n7' 'n8'
+    8         8    8    8    8    8    8    8    8    8
+    'd'     'd'  'd'  'd'  'd'  'd'  'd'  'd'  'd'  'd'
     }','Var',{'fld','size','fmt'});
-FLDS.startChar = 1+[0;cumsum(FLDS.size(1:end-1))];
-FLDS.endChar = FLDS.startChar + FLDS.size - 1;
-FLDS.charInds = arrayfun(@(from,to)from:to,FLDS.startChar,FLDS.endChar,'Un',0);
-nFlds = size(FLDS,1);
-fmtStr = cell2mat(strcat('%', arrayfun(@num2str,FLDS.size,'Un',0), FLDS.fmt)');
-SHELLDATA = zeros(nShells,nFlds,'uint32');
+FLDSshellThick = cell2table({
+    'eid' 'pid' 'n1' 'n2' 'n3' 'n4' 'n5' 'n6' 'n7' 'n8' 't1' 't2' 't3' 't4' 'beta'
+    8         8    8    8    8    8    8    8    8    8   16   16   16   16     16
+    'd'     'd'  'd'  'd'  'd'  'd'  'd'  'd'  'd'  'd'  'f'  'f'  'f'  'f'    'f'
+    }','Var',{'fld','size','fmt'});
 
-hasCommasMask = any(shellFullTextChar==',',2);
-if any(hasCommasMask)
-    warning('Comma-separated ELEMENT cards not yet supported')
+shllTypeTab = cell2table({
+    "ELEMENT_SHELL"               FLDSshell         
+    "ELEMENT_SHELL_THICKNESS"     FLDSshellThick
+    }, 'Var', {'keyword','FLDS'});
+
+for mNo = 1:size(shllTypeTab,1)
+    
+    m = strcmpi(shllTypeTab.keyword(mNo),cardNames);
+    shellFullText = regexp([cardsFullText{m}],'^\s*[^\$\*][^\r\n]*','match','lineanchors')';
+    shellFullTextChar = char(shellFullText);
+    % For shell thickness elems just join lines 1 (nodes) and 2 (thickness)
+    if shllTypeTab.keyword(mNo)=="ELEMENT_SHELL_THICKNESS"
+        shellFullTextChar = [shellFullTextChar(1:2:end,:) shellFullTextChar(2:2:end,:)];
+    end
+    nShells = size(shellFullTextChar,1);
+    FLDS = shllTypeTab.FLDS{mNo};
+    FLDS.startChar = 1+[0;cumsum(FLDS.size(1:end-1))];
+    FLDS.endChar = FLDS.startChar + FLDS.size - 1;
+    FLDS.charInds = arrayfun(@(from,to)from:to,FLDS.startChar,FLDS.endChar,'Un',0);
+    nFlds = size(FLDS,1);
+    fmtStr = cell2mat(strcat('%', arrayfun(@num2str,FLDS.size,'Un',0), FLDS.fmt)');
+    if all(strcmp(FLDS.fmt,'d'))
+        SHELLDATA = zeros(nShells,nFlds,'uint32');
+    else
+        SHELLDATA = zeros(nShells,nFlds);
+    end
+    hasCommasMask = any(shellFullTextChar==',',2);
+    if any(hasCommasMask)
+        warning('Comma-separated ELEMENT cards not yet supported')
+    end
+    
+    % Parse formatted text by column nos
+    sizeBasedText = shellFullTextChar(~hasCommasMask,1:FLDS.endChar(end))';
+    sizeBasedText(end+1:max(FLDS.endChar),:) = ' ';
+    for i = 1:nFlds
+        emptyMask = all(sizeBasedText(FLDS.charInds{i},:) == ' ',1);
+        sizeBasedText(FLDS.endChar(i),emptyMask) = '0';
+    end
+    shlDataFromFormattedText = reshape(sscanf(sizeBasedText,fmtStr), nFlds,[])';
+    SHELLDATA(~hasCommasMask,:) = shlDataFromFormattedText;
+    
+    SHELL_TABLE = array2table(SHELLDATA,'Var',FLDS.fld);
+    % Change digit-specified fields to ints
+    for fldNo = find(strcmp(FLDS.fmt,'d'))'
+        fld = FLDS.fld{fldNo};
+        SHELL_TABLE.(fld) = uint32(SHELL_TABLE.(fld));
+    end
+    
+    % Create nids as an N-by-nodes matrix instead of individual fields
+    nidFlds = ~cellfun(@isempty,regexp(SHELL_TABLE.Properties.VariableNames,'^n\d+$'));
+    SHELL_TABLE = mergevars(SHELL_TABLE,nidFlds,'NewVariableName','nids');
+    % Drop node ids that are unused
+    SHELL_TABLE.nids(:,all(SHELL_TABLE.nids==0,1)) = [];
+    % Merge thickness fields also
+    thicFlds = ~cellfun(@isempty,regexp(SHELL_TABLE.Properties.VariableNames,'^t\d+$'));
+    if any(thicFlds)
+        SHELL_TABLE = mergevars(SHELL_TABLE,thicFlds,'NewVariableName','thic');
+        % Drop node ids that are unused
+        SHELL_TABLE.thic(:,all(SHELL_TABLE.thic==0,1)) = [];
+    end
+    shllTypeTab.DATA{mNo,1} = SHELL_TABLE;
 end
 
-% Parse formatted text by column nos
-sizeBasedText = shellFullTextChar(~hasCommasMask,1:FLDS.endChar(end))';
-sizeBasedText(end+1:max(FLDS.endChar),:) = ' ';
-for i = 1:nFlds
-    emptyMask = all(sizeBasedText(FLDS.charInds{i},:) == ' ',1);
-    sizeBasedText(FLDS.endChar(i),emptyMask) = '0';
-end
-shlDataFromFormattedText = reshape(sscanf(sizeBasedText,fmtStr), nFlds,[])';
-SHELLDATA(~hasCommasMask,:) = shlDataFromFormattedText;
-ELEMENT_SHELL = array2table(SHELLDATA,'Var',FLDS.fld);
-% Change individuals nodes to a matrix of nodes
-ELEMENT_SHELL.nids = table2array(ELEMENT_SHELL(:,~cellfun(@isempty,regexp(ELEMENT_SHELL.Properties.VariableNames,'^n\d+$'))));
-ELEMENT_SHELL(:,~cellfun(@isempty,regexp(ELEMENT_SHELL.Properties.VariableNames,'^n\d+$'))) = [];
-
+[ELEMENT_SHELL,ELEMENT_SHELL_THICKNESS] = shllTypeTab.DATA{:};
 
 %% Get SOLID ELEMENTS
 m = strcmpi('ELEMENT_SOLID',cardNames);
