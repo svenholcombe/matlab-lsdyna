@@ -3,6 +3,7 @@ classdef NODE < lsdyna.keyword.card
     
     properties (Constant)
         KeywordMatch = "NODE";
+        LineDefinitions = lsdyna.keyword.utils.cardLineDefinition("NODE");
     end
     properties (Constant, Hidden)
         DependentCards = strings(1,0)
@@ -10,6 +11,17 @@ classdef NODE < lsdyna.keyword.card
     
     properties
         NodeData = table;
+    end
+    
+    methods
+        function strs = sca_dataToString(C)
+            FLDS = C.LineDefinitions.FLDS{1};
+            DATA = table2cell(C.NodeData)';
+            
+            printSpec = strjoin("%" + FLDS.size + FLDS.fmt,"") + newline;
+            strs = splitlines(sprintf(printSpec, DATA{:}));
+            strs = strs(1:end-1);
+        end
     end
     
     %% CONSTRUCTOR
@@ -24,10 +36,10 @@ classdef NODE < lsdyna.keyword.card
             % Else call superclass constructor on varargin
         end
         
-        function C = parseData(C)
+        function C = arr_stringToData(C)
             % Parse the string data and populate this card's numeric data
             
-            lineDefns = lsdyna.keyword.utils.cardLineDefinition("NODE");
+            lineDefns = C(1).LineDefinitions;
             % There's only 1 repeated line for NODE cards. Just use it.
             FLDS = lineDefns.FLDS{1};
             

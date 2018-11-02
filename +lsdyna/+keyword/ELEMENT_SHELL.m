@@ -3,6 +3,8 @@ classdef ELEMENT_SHELL < lsdyna.keyword.card
     
     properties (Constant)
         KeywordMatch = "ELEMENT_SHELL";
+        LineDefinitions = ...
+            lsdyna.keyword.utils.cardLineDefinition("ELEMENT_SHELL");
     end
     properties (Constant, Hidden)
         DependentCards = "NODE";
@@ -24,13 +26,13 @@ classdef ELEMENT_SHELL < lsdyna.keyword.card
             % Else call superclass constructor on varargin
         end
         
-        function C = parseData(C)
+        function C = arr_stringToData(C)
             % Parse the string data and populate this card's numeric data
             
             % Supply definitions for each line of any cards represented by
             % this class
-            lineDefns = lsdyna.keyword.utils.cardLineDefinition("ELEMENT_SHELL");
-
+            lineDefns = C(1).LineDefinitions;
+            
             %% Populate the line definitions with strings from each card
             % We will group into individual cards first, then separate into
             % the separate lines within each card

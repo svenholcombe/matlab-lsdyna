@@ -27,7 +27,7 @@ classdef PART < lsdyna.keyword.card
             % Else call superclass constructor on varargin
         end
         
-        function C = parseData(C)
+        function C = arr_stringToData(C)
             % Parse the string data and populate this card's numeric data
             
             % Make sure we're only looking at cards of this type

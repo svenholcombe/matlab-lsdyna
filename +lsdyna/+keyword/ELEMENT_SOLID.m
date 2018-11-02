@@ -3,6 +3,8 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
     
     properties (Constant)
         KeywordMatch = "ELEMENT_SOLID";
+        LineDefinitions = ...
+            lsdyna.keyword.utils.cardLineDefinition("ELEMENT_SOLID");
     end
     properties (Constant, Hidden)
         DependentCards = "NODE";
@@ -10,6 +12,19 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
     
     properties
         ElemData = table;
+    end
+    
+    methods
+        function strs = sca_dataToString(C)
+            %%
+            FLDS = C.LineDefinitions.FLDS{1};
+            DATA = table2array(C.ElemData); % OK because all fields are ints?
+            
+            printSpec = strjoin("%0" + FLDS.size + FLDS.fmt,"") + newline;
+            strs = sprintf(printSpec, DATA');
+            strs = splitlines(strs);
+            strs = strs(1:end-1);
+        end
     end
     
     %% CONSTRUCTOR
@@ -24,7 +39,7 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
             % Else call superclass constructor on varargin
         end
         
-        function C = parseData(C)
+        function C = arr_stringToData(C)
             % Parse the string data and populate this card's numeric data
             
             % Supply definitions for each line of any cards represented by
@@ -33,8 +48,7 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
             % NOTE: This assumes ONLY the old style of solid element input
             % with 1 card (eid,pid,n1-n8) whereas there is a new style with
             % 2-line input where line 1 is (eid,pid) and line 2 is (n1-n10)
-
-            lineDefns = lsdyna.keyword.utils.cardLineDefinition("ELEMENT_SOLID");
+            lineDefns = C(1).LineDefinitions;
             %% Populate the line definitions with strings from each card
             % We will group into individual cards first, then separate into
             % the separate lines within each card
