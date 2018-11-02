@@ -30,6 +30,13 @@ classdef card < lsdyna.keyword.card_base
         end
     end
     
+    methods
+        function strs = sca_dataToString(C)
+            % By default return the card's String (no data referenced)
+            strs = C.String;
+        end
+    end
+    
     %% CONSTRUCTOR UTILITY methods
     
     methods (Hidden)

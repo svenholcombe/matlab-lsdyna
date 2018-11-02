@@ -106,7 +106,7 @@ classdef file < handle
             F.makeSpecificCards;
             fprintf("done in %0.2fs\n", toc)
             
-            F.Cards.parseAllData;
+            F.Cards.stringToData;
             
         end
     end
