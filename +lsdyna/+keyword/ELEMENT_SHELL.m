@@ -38,11 +38,14 @@ classdef ELEMENT_SHELL < lsdyna.keyword.card
             % the separate lines within each card
             [unqKeywords,~,keyGrp] = unique(lineDefns.keyword);
             unqKeyT = table(unqKeywords,'Var',{'keyword'});
+            unqKeyT.strs(:,1) = {strings(0,1)};
             for grpNo = 1:length(unqKeywords)
                 m = [C.Keyword]==unqKeywords(grpNo);
                 unqKeyT.cardMask(grpNo,:) = m(:)';
-                unqKeyT.strs(grpNo,1) = {cat(1,C(m).ActiveString)};
-                unqKeyT.lineCounts(grpNo,1) = {cellfun(@numel,{C(m).ActiveString})};
+                if any(m)
+                    unqKeyT.strs(grpNo) = {cat(1,C(m).ActiveString)};
+                    unqKeyT.lineCounts(grpNo,1) = {cellfun(@numel,{C(m).ActiveString})};
+                end
             end
             for mNo = 1:size(lineDefns,1)
                 grpNo = keyGrp(mNo);
@@ -57,20 +60,10 @@ classdef ELEMENT_SHELL < lsdyna.keyword.card
             for mNo = 1:size(lineDefns,1)
                 strs = lineDefns.strs{mNo};
                 FLDS = lineDefns.FLDS{mNo};
-                strsAsCharMat = char(strs);
                 
-                nFlds = size(FLDS,1);
-                fmtStr = cell2mat(strcat(...
-                    '%', arrayfun(@num2str,FLDS.size,'Un',0), FLDS.fmt)');
-
-                % Parse formatted text by column nos
-                sizeBasedText = strsAsCharMat(:,1:FLDS.endChar(end))';
-                sizeBasedText(end+1:max(FLDS.endChar),:) = ' ';
-                for i = 1:nFlds
-                    emptyMask = all(sizeBasedText(FLDS.charInds{i},:) == ' ',1);
-                    sizeBasedText(FLDS.endChar(i),emptyMask) = '0';
-                end
-                SHELLDATA = reshape(sscanf(sizeBasedText,fmtStr), nFlds,[])';
+                % Turn comma-sep lines into spaced lines and read the data
+                strs = C.convertCommaSepStrsToSpacedStrs(strs,FLDS.size);
+                SHELLDATA = C.convertSpacedStrsToMatrix(strs,FLDS);
                 SHELL_TABLE = array2table(SHELLDATA,'Var',FLDS.fld);
                 % Change digit-specified fields to ints (CAREFUL! we don't
                 % want to change deliberately negative integers so this bit
@@ -91,7 +84,7 @@ classdef ELEMENT_SHELL < lsdyna.keyword.card
             % we could add dummy thickness variables to the ELEMENT_SHELL
             % cards so that they can all be concatenated. I'm not sure what
             % is best. Let's stick with cards being unique.
-            for grpNo = 1:length(unqKeywords)
+            for grpNo = find(~cellfun(@isempty,lineDefns.strs)')
                 % Concatenate lines into one wide data table
                 DT = [lineDefns.DATA_TABLE{keyGrp==grpNo}];
                 % Merge nodeId vars into one var and drop unused nodes

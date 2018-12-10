@@ -73,20 +73,10 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
             for mNo = 1:size(lineDefns,1)
                 strs = lineDefns.strs{mNo};
                 FLDS = lineDefns.FLDS{mNo};
-                strsAsCharMat = char(strs);
                 
-                nFlds = size(FLDS,1);
-                fmtStr = cell2mat(strcat(...
-                    '%', arrayfun(@num2str,FLDS.size,'Un',0), FLDS.fmt)');
-
-                % Parse formatted text by column nos
-                sizeBasedText = strsAsCharMat(:,1:FLDS.endChar(end))';
-                sizeBasedText(end+1:max(FLDS.endChar),:) = ' ';
-                for i = 1:nFlds
-                    emptyMask = all(sizeBasedText(FLDS.charInds{i},:) == ' ',1);
-                    sizeBasedText(FLDS.endChar(i),emptyMask) = '0';
-                end
-                RAWDATA = reshape(sscanf(sizeBasedText,fmtStr), nFlds,[])';
+                % Turn comma-sep lines into spaced lines and read the data
+                strs = C.convertCommaSepStrsToSpacedStrs(strs,FLDS.size);
+                RAWDATA = C.convertSpacedStrsToMatrix(strs,FLDS);
                 TABLE_DATA = array2table(RAWDATA,'Var',FLDS.fld);
                 % Change digit-specified fields to ints (CAREFUL! we don't
                 % want to change deliberately negative integers so this bit

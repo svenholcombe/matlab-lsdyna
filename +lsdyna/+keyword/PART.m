@@ -29,14 +29,7 @@ classdef PART < lsdyna.keyword.card
         
         function C = arr_stringToData(C)
             % Parse the string data and populate this card's numeric data
-            
-            % Make sure we're only looking at cards of this type
-            targetClass = meta.class.fromName(mfilename('class'));
-            if metaclass(C)~=targetClass
-                tf = arrayfun(@(x)metaclass(x) <= targetClass, C);
-                C = C(tf);
-            end
-            
+
             activeStrs = {C.ActiveString};
             % The heading will always be the first line
             headings = cellstr(deblank(cellfun(@(x)x(1),activeStrs)));
