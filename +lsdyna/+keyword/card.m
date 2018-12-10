@@ -95,6 +95,42 @@ classdef card < lsdyna.keyword.card_base
                 strs(hasCommaInds(grps==grpNo)) = string([pieces{:}]);
             end
         end
+        
+        function DATAMAT = convertSpacedStrsToMatrix(strs,FLDS)
+            % Convert an array of strings into a matrix of data
+
+            nFlds = height(FLDS);
+            % Convert strings to char matrix for use in sscanf which is the
+            % fastest way to bulk-read fixed width data.
+            charMat = char(strs);
+            % And ensure that the charMat is at least as wide as expected
+            charMat(:,FLDS.endChar(end)+1) = ' ';
+            % MATLAB, however, is terrible at true fixed-width reading
+            % because it doesn't acknowledge spaces as taking up width (see
+            % https://www.mathworks.com/matlabcentral/answers/110381). So
+            % we need to artificially add a default (0) value for fields
+            % that are total whitespace:
+            for i = 1:nFlds
+                emptyMask = all(charMat(:,FLDS.charInds{i}) == ' ',2);
+                charMat(emptyMask,FLDS.endChar(i)) = '0';
+            end
+            % and we need to add an extra separator character between
+            % fields in case the full field width is taken up by data such
+            % as '1111    23333' which becomes [1111 2333 3] instead of
+            % [1111 2 3333] if we don't add a separator. We therefore have
+            % source colNos (into charMat) and shifted targetColNos.
+            srcCols = [FLDS.charInds{:}];
+            % Columns will shift right with one extra char per field
+            colPads = num2cell(cumsum(0:nFlds-1)');
+            tarColInds = cellfun(@(o,e)o+e,FLDS.charInds,colPads,'Un',0);
+            tarCols = [tarColInds{:}];
+            % Initialize the separated char mat with spaces and then fill
+            charMatAndSep = repmat(' ',size(charMat,1), tarCols(end)+1);
+            charMatAndSep(:,tarCols) = charMat(:,srcCols);
+            % Now we can finally use sscanf to read the data
+            fmtStr = strjoin("%" + FLDS.size + FLDS.fmt," ") + " ";
+            DATAMAT = reshape(sscanf(charMatAndSep',fmtStr), nFlds,[])';
+        end
     end
 end
 
