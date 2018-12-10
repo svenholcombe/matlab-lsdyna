@@ -7,15 +7,21 @@ function [PART, NODE, ELEMENT_SHELL, ELEMENT_SOLID, ELEMENT_SHELL_THICKNESS] = k
 
 % Read the kfile and extract separate cards
 F = lsdyna.keyword.file.readKfile(kFileStr);
+[~, ~, ~, ~, ELEMENT_SHELL_THICKNESS] = deal([]);
 %%
 C_NODE = F.Cards(startsWith([F.Cards.Keyword],"NODE"));
 NODE = cat(1,C_NODE.NodeData);
-C_PART = F.Cards(startsWith([F.Cards.Keyword],"PART"));
 PART = table([C_PART.Heading]',uint32([C_PART.PID]'),uint32([C_PART.SID]'),uint32([C_PART.MID]'),'Var',{
     'Title' 'pid' 'secid' 'mid'});
 C_ELEM = F.Cards(startsWith([F.Cards.Keyword],"ELEMENT_SHELL_THICKNESS"));
-ELEMENT_SHELL_THICKNESS = cat(1,C_ELEM.ElemData);
+if ~isempty(C_ELEM)
+    ELEMENT_SHELL_THICKNESS = cat(1,C_ELEM.ElemData);
+end
 C_ELEM = F.Cards([F.Cards.Keyword]=="ELEMENT_SHELL");
 ELEMENT_SHELL = cat(1,C_ELEM.ElemData);
 C_ELEM = F.Cards(startsWith([F.Cards.Keyword],"ELEMENT_SOLID"));
 ELEMENT_SOLID = cat(1,C_ELEM.ElemData);
+
+
+
+
