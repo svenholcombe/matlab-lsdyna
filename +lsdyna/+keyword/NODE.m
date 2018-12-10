@@ -41,28 +41,16 @@ classdef NODE < lsdyna.keyword.card
             lineDefns = C(1).LineDefinitions;
             % There's only 1 repeated line for NODE cards. Just use it.
             FLDS = lineDefns.FLDS{1};
-            nFlds = size(FLDS,1);
-            fmtStr = cell2mat(strcat('%', arrayfun(@num2str,FLDS.size,'Un',0), FLDS.fmt)');
             
             % Grab and concatenate each card's active strings
             strs = cat(1,C.ActiveString);
             strsLineCounts = cellfun(@numel,{C.ActiveString});
+            
+            % Turn comma-sep lines into spaced lines and read the data
             strs = C.convertCommaSepStrsToSpacedStrs(strs,FLDS.size);
+            NODEDATA = C.convertSpacedStrsToMatrix(strs,FLDS);
             
-            % Convert strings to char matrix, truncate whitespace from long
-            % lines and fill mat to expected size with spaces and a newline
-            strsAsCharMat = char(strs);
-            strsAsCharMat(:,FLDS.endChar(end)+2:end) = [];
-            strsAsCharMat(:,FLDS.endChar(end)+1) = newline;
-            
-            % Default empty pieces to "0" for proper use in sscanf
-            for i = 1:nFlds
-                emptyMask = all(strsAsCharMat(:,FLDS.charInds{i}) == ' ',2);
-                strsAsCharMat(emptyMask,FLDS.endChar(i)) = '0';
-            end
-            
-            % Scanf the string and extract numeric data
-            NODEDATA = reshape(sscanf(strsAsCharMat',[fmtStr newline]), nFlds,[])';
+            % Convert appropriate data field types
             NODE = array2table(NODEDATA,'Var',FLDS.fld);
             NODE.nid = uint32(NODE.nid);
             NODE.tc = uint8(NODE.tc);
