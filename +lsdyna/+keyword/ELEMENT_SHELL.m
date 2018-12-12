@@ -84,7 +84,7 @@ classdef ELEMENT_SHELL < lsdyna.keyword.card
             % we could add dummy thickness variables to the ELEMENT_SHELL
             % cards so that they can all be concatenated. I'm not sure what
             % is best. Let's stick with cards being unique.
-            for grpNo = find(~cellfun(@isempty,lineDefns.strs)')
+            for grpNo = find(~cellfun(@isempty,unqKeyT.strs)')
                 % Concatenate lines into one wide data table
                 DT = [lineDefns.DATA_TABLE{keyGrp==grpNo}];
                 % Merge nodeId vars into one var and drop unused nodes
