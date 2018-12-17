@@ -16,7 +16,7 @@ classdef file < handle
                 % Make an empty file
                 return;
             end
-            [F.Filepath,fname,fext] = fileparts(filename);
+            [F.Filepath,fname,fext] = fileparts(char(filename));
             F.Filename = [fname fext];
             % Add potential custom input
             IP = inputParser;
