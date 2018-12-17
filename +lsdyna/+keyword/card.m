@@ -110,6 +110,7 @@ classdef card < lsdyna.keyword.card_base
             % https://www.mathworks.com/matlabcentral/answers/110381). So
             % we need to artificially add a default (0) value for fields
             % that are total whitespace:
+            charMat(charMat==char(0)) = ' ';
             for i = 1:nFlds
                 emptyMask = all(charMat(:,FLDS.charInds{i}) == ' ',2);
                 charMat(emptyMask,FLDS.endChar(i)) = '0';
