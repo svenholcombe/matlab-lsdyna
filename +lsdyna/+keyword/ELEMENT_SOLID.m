@@ -45,9 +45,17 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
             % Supply definitions for each line of any cards represented by
             % this class.
             
-            % NOTE: This assumes ONLY the old style of solid element input
-            % with 1 card (eid,pid,n1-n8) whereas there is a new style with
-            % 2-line input where line 1 is (eid,pid) and line 2 is (n1-n10)
+            % NOTE: This currently assumes that a card with keyword
+            % "ELEMENT_SOLID" refers ONLY the old style of solid element
+            % input with 1 card (eid,pid,n1-n8) whereas there is a new
+            % style with 2-line input where line 1 is (eid,pid) and line 2
+            % is (n1-n10). The GHBMC model used a longer keyword of
+            % "ELEMENT_SOLID (ten nodes format)" for these cards so for now
+            % we will just use this to separate the two formats. It seems
+            % that both formats are valid in the LS-Dyna manual, so what is
+            % most likely needed is to inspect the actual contents of any
+            % ELEMENT_SOLID card to determine if the first line contains
+            % only two (eid, pid) values.
             lineDefns = C(1).LineDefinitions;
             %% Populate the line definitions with strings from each card
             % We will group into individual cards first, then separate into
