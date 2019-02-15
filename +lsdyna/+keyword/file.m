@@ -37,6 +37,33 @@ classdef file < handle
             F.Cards = makeSpecificCards(F.Cards);
         end
         
+        function NodeT = getNodesTable(KF)
+            % Obtain all node data in a single table
+            C = KF.Cards(startsWith([KF.Cards.Keyword],"NODE","ignoreCase",true));
+            NodeT = cat(1,C.NodeData);
+        end
+        function PartT = getPartsTable(KF)
+            % Obtain all part data in a single table
+            C = KF.Cards(startsWith([KF.Cards.Keyword],"PART","ignoreCase",true));
+            PartT = table(uint32([C.PID]'), [C.Heading]', ...
+                uint32([C.MID]'), uint32([C.SID]'), C(:), 'Var',{
+                'pid','heading','mid','sid','card'});
+        end
+        function ElemT = getElementsTable(KF)
+            % Obtain all (or most) element data in a single table
+            C = KF.Cards(startsWith([KF.Cards.Keyword],"ELEMENT","ignoreCase",true));
+            ElemCell = arrayfun(@(C)C.ElemData,C,'Un',0,'Err',@(a,b)[]);
+            % Note that here we're dropping unknown element types, as well
+            % as any element properties other than eid, pid, nids
+            ElemCell(cellfun(@isempty,ElemCell)) = [];
+            nodesPerCell = cellfun(@(x)size(x.nids,2),ElemCell);
+            for i = 1:numel(ElemCell)
+                ElemCell{i}.nids(:,end+1:max(nodesPerCell)) = 0;
+                ElemCell{i} = ElemCell{i}(:,["eid" "pid" "nids"]);
+            end
+            ElemT = cat(1,ElemCell{:});
+        end
+        
     end
     
     

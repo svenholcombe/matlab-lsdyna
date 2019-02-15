@@ -9,8 +9,7 @@ classdef card_base < handle & matlab.mixin.Heterogeneous
     %   each ith scalar element of C. The sca_printData() method must
     %   therefore be defined in all subclasses.
     %  2. Iterate through each class type and invoke the array method for
-    %   all elements sharing a common class. The
-    %   Detailed explanation goes here
+    %   all elements sharing a common class.
     
     properties
         Keyword(1,1) string = ""
