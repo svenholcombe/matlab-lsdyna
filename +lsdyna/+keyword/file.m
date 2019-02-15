@@ -50,20 +50,60 @@ classdef file < handle
                 'pid','heading','mid','sid','card'});
         end
         function ElemT = getElementsTable(KF)
-            % Obtain all (or most) element data in a single table
+            %% Obtain all (or most) element data in a single table
             C = KF.Cards(startsWith([KF.Cards.Keyword],"ELEMENT","ignoreCase",true));
+            ElemCardKeys = categorical([C.Keyword]');
             ElemCell = arrayfun(@(C)C.ElemData,C,'Un',0,'Err',@(a,b)[]);
             % Note that here we're dropping unknown element types, as well
             % as any element properties other than eid, pid, nids
-            ElemCell(cellfun(@isempty,ElemCell)) = [];
-            nodesPerCell = cellfun(@(x)size(x.nids,2),ElemCell);
+            nodesPerCell = cellfun(@(x)size(x.nids,2),ElemCell,'Err',@(a,b)0);
+            maxNodesCount = max(nodesPerCell);
             for i = 1:numel(ElemCell)
-                ElemCell{i}.nids(:,end+1:max(nodesPerCell)) = 0;
+                if isempty(ElemCell{i})
+                    continue;
+                end
+                ElemCell{i}.nids(:,end+1:maxNodesCount) = 0;
                 ElemCell{i} = ElemCell{i}(:,["eid" "pid" "nids"]);
+                ElemCell{i}.keyword(:,1) = ElemCardKeys(i);
             end
             ElemT = cat(1,ElemCell{:});
+
+            % It will be useful to obtain the TYPE of element, namely TRIA
+            % (3 noded 2d triangle), QUAD (4 noded 2d), TETRA (4 noded 3d),
+            % PYRAMID (5 noded 3d), HEX (8 noded 3d) or OTHER
+            ElemT.elemType(:,1) = categorical("");
+            numUnqNodes = ones(height(ElemT),1);
+            for nodeNo = 2:maxNodesCount
+                isNewNode = ElemT.nids(:,nodeNo) ~= 0 & ...
+                    ~any(ElemT.nids(:,nodeNo) == ElemT.nids(:,1:nodeNo-1),2);
+                numUnqNodes(isNewNode) = numUnqNodes(isNewNode) + 1;
+            end
+            ElemT.nodeCount = categorical(numUnqNodes);
+            [unqCnts,~,unqGrp] = unique(numUnqNodes);
+            isShell = contains(string(ElemT.keyword),"SHELL",'ignoreCase',true);
+            isSolid = contains(string(ElemT.keyword),"SOLID",'ignoreCase',true);
+            for i = 1:length(unqCnts)
+                m = unqGrp==i;
+                switch unqCnts(i)
+                    case 1
+                        ElemT.elemType(m) = categorical("1d");
+                    case 2
+                        ElemT.elemType(m) = categorical("2d");
+                    case 3
+                        ElemT.elemType(m & isShell) = categorical("tria");
+                        ElemT.elemType(m & ~isShell) = categorical("2d_oriented");
+                    case 4
+                        ElemT.elemType(m & isShell) = categorical("quad");
+                        ElemT.elemType(m & isSolid) = categorical("tetra");
+                    case 5
+                        ElemT.elemType(m & isSolid) = categorical("pyramid");
+                    case 6
+                        ElemT.elemType(m & isSolid) = categorical("triprism");
+                    case 8
+                        ElemT.elemType(m & isSolid) = categorical("hex");
+                end
+            end
         end
-        
     end
     
     

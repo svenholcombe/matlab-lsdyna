@@ -2,9 +2,9 @@ classdef utils
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
-    methods (Static)
+    methods (Static = true)
         function defns = cardLineDefinition(cardId)
-            switch cardId
+            switch upper(cardId)
                 case "NODE"
                     FLDS = cell2table({
                         'nid' 'x'  'y'  'z' 'tc' 'rc'
@@ -61,14 +61,13 @@ classdef utils
                         "ELEMENT_SOLID (ten nodes format)"  2 @(i)mod(i,2)==0   FLDSsolid10_line2
                         }, 'Var', {'keyword','lineNo','lineMatchFcn','FLDS'});
                 case "ELEMENT_DISCRETE"
-                    case "NODE"
                     FLDS = cell2table({
-                        'nid' 'pid' 'n1' 'n2' 'vid' 's' 'pf' 'offset'
+                        'eid' 'pid' 'n1' 'n2' 'vid' 's' 'pf' 'offset'
                         8      8     8    8    8    16   8    16
                         "d"   "d"   "d"  "d"  "d"  "f"  "d"   "f"
                         }','Var',{'fld','size','fmt'});
                     defns = cell2table({
-                        "NODE" 1 @(i)true(size(i)) FLDS
+                        "ELEMENT_DISCRETE" 1 @(i)true(size(i)) FLDS
                         }, 'Var', {'keyword','lineNo','lineMatchFcn','FLDS'});
             end
             
