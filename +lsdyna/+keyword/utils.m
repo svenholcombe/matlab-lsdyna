@@ -69,6 +69,15 @@ classdef utils
                     defns = cell2table({
                         "ELEMENT_DISCRETE" 1 @(i)true(size(i)) FLDS
                         }, 'Var', {'keyword','lineNo','lineMatchFcn','FLDS'});
+                case "ELEMENT_BEAM"
+                    FLDS = cell2table({
+                        'eid' 'pid' 'n1' 'n2' 'n3' 'rt1' 'rr1' 'rt2' 'rr2' 'local'
+                        8      8     8    8    8    8     8     8     8     8
+                        "d"   "d"   "d"  "d"  "d"  "d"  "d"   "d"    "d"   "d"
+                        }','Var',{'fld','size','fmt'});
+                    defns = cell2table({
+                        "ELEMENT_BEAM" 1 @(i)true(size(i)) FLDS
+                        }, 'Var', {'keyword','lineNo','lineMatchFcn','FLDS'});
             end
             
             % Push some helpful variables into the FLDS table
