@@ -17,7 +17,7 @@ C_NODE = F.Cards(startsWith([F.Cards.Keyword],"NODE"));
 NODE = cat(1,C_NODE.NodeData);
 C_PART = F.Cards(startsWith([F.Cards.Keyword],"PART"));
 PART = table([C_PART.Heading]',uint32([C_PART.PID]'),uint32([C_PART.SID]'),uint32([C_PART.MID]'),'Var',{
-    'Title' 'pid' 'secid' 'mid'});
+    'heading' 'pid' 'secid' 'mid'});
 C_ELEM = F.Cards(startsWith([F.Cards.Keyword],"ELEMENT_SHELL_THICKNESS"));
 if ~isempty(C_ELEM)
     ELEMENT_SHELL_THICKNESS = cat(1,C_ELEM.ElemData);
