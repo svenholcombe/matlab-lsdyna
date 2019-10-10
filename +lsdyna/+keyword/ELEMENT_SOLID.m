@@ -71,6 +71,10 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
             for mNo = 1:size(lineDefns,1)
                 grpNo = keyGrp(mNo);
                 fullStrs = unqKeyT.strs{grpNo};
+                if isempty(fullStrs)
+                    lineDefns.strs(mNo,1) = {[]};
+                    continue;
+                end
                 lineMask = lineDefns.lineMatchFcn{mNo}(1:length(fullStrs));
                 FLDS = lineDefns.FLDS{mNo};
                 lineDefns.strs(mNo,1) = { % Convert comma-separated to spaces
@@ -78,7 +82,7 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
             end
             
             %% Convert each line to data
-            for mNo = 1:size(lineDefns,1)
+            for mNo = find(~cellfun(@isempty,lineDefns.strs))'
                 strs = lineDefns.strs{mNo};
                 FLDS = lineDefns.FLDS{mNo};
                 
@@ -101,6 +105,9 @@ classdef ELEMENT_SOLID < lsdyna.keyword.card
             for grpNo = 1:length(unqKeywords)
                 % Concatenate lines into one wide data table
                 DT = [lineDefns.DATA_TABLE{keyGrp==grpNo}];
+                if isempty(DT)
+                    continue;
+                end
                 % Merge nodeId vars into one var and drop unused nodes
                 nidFlds = ~cellfun(@isempty,...
                     regexp(DT.Properties.VariableNames,'^n\d+$'));
