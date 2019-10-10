@@ -104,6 +104,13 @@ classdef file < handle
                 end
             end
         end
+        
+        function append(KF, varargin)
+            % Append one or more KFILES via concatenating their Cards.
+            for i = 1:length(varargin)
+                KF.Cards = cat(1,KF.Cards,varargin{i}.Cards);
+            end
+        end
     end
     
     
