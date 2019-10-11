@@ -122,8 +122,8 @@ classdef file < handle
             % readKfile(...,NLINES) % Read just NLINES lines (for testing)
             
             % Determine the input syntax and read
-            if (isStringScalar(FILE) || ischar(FILE)) ...
-                    && strlength(FILE) < 1000 && exist(FILE,'file')
+            if (isStringScalar(FILE) || ischar(FILE)) && strlength(FILE) < 1000
+                assert(exist(FILE,'file')>0,"File not found: %s\n",FILE)
                 filename = FILE;
                 tic
                 fprintf("Reading %s ... ", FILE)
